@@ -3,7 +3,7 @@ from discord.ext import commands
 import asyncio
 import yaml
 
-TOKEN = ODM2MjU4OTgzMjY1Njk3ODU0.YIbY3g.VH0HJvlJJQ7ifbMt2AzXSMzjdkY
+TOKEN = 'ODM2MjU4OTgzMjY1Njk3ODU0.YIbY3g.VH0HJvlJJQ7ifbMt2AzXSMzjdkY'
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='-', intents=intents)
