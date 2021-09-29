@@ -12,13 +12,13 @@ pablitohelp     (Tell the user to check pablito-docs)
 credits         (Show credits)
 calculate, clc  (Calculate a given expression)
 memberinfo, mi  (Info of given member)
-serverinfo, si  (Server's info)
-channelinfo, ci (Channel info)
-roleinfo        (Role info)
+serverinfo, si  (Server's info) ~
+channelinfo, ci (Channel info)  ~
+roleinfo        (Role info)     ~
 lookingforplay, lfp (Looking for play function)
 translate, tt   (Translate a string from lang to lang)
 
-setstatus    (change bot's status)
+setstatus    (change bot's status)  ~~
 
 listchanneltypes    (Give a list of types of channels)
 setchannel          (set given channel as given type)
@@ -27,6 +27,7 @@ setchannel          (set given channel as given type)
     exit
     rules
     rolemenu
+    verify
     notify
     log
     chat
@@ -61,6 +62,7 @@ remrole, rer    (Remove role, for users)
 
 verify  (verify member)
 mute    (mute member)
+kick    (Kick a member)
 banish  (Banish member to dungeon)
 report  (Report a member or message to admins and mods)
 warn    (Warn a user in case of rule break)

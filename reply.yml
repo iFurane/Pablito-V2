@@ -1,0 +1,25 @@
+syntax_error:
+  color: 0xff0000
+  timeout: 15
+
+poll:
+  color: 0x00ff00
+  timeout: 0
+
+info:
+  color: 0x00d629
+  timeout: 0
+
+wiki:
+  color: 0xffffff
+  timeout: 0
+
+video_notif:
+  default_text: iFurane uploaded a new video! Go watch it asap
+  color: 0xff0000
+  timeout: 0
+
+live_notif:
+  default_text: iFurane is live!
+  color: 0x000000
+  timeout: 0

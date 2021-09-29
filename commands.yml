@@ -1,0 +1,3 @@
+setstatus:
+  syntax: -setstatus <type:game,listen,watch,stream> <stream url if stream> <status text>
+  min_syntax: -ss <type:game,listen,watch,stream> <stream url if stream> <status text>
