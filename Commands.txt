@@ -1,0 +1,74 @@
+TO BE ADDED:
+wikisearch, ws  (Wikipedia search)
+wikirandom, wr  (Random wikipedia article)
+tagcreate, tc   (Create a tag)
+tag, t          (Recall tag)
+tagdelete, td   (Delete a tag)
+tagedit, te     (Edit a tag)
+taglist, tl     (List all tags)
+taginfo, ti     (Tag information)
+poll, p         (Poll, question in "", options in '', no expiration if timeout 0, yes/no poll if no options given)
+pablitohelp     (Tell the user to check pablito-docs)
+credits         (Show credits)
+calculate, clc  (Calculate a given expression)
+memberinfo, mi  (Info of given member)
+serverinfo, si  (Server's info)
+channelinfo, ci (Channel info)
+roleinfo        (Role info)
+lookingforplay, lfp (Looking for play function)
+translate, tt   (Translate a string from lang to lang)
+
+setstatus    (change bot's status)
+
+listchanneltypes    (Give a list of types of channels)
+setchannel          (set given channel as given type)
+    TYPES:
+    enter
+    exit
+    rules
+    rolemenu
+    notify
+    log
+    chat
+    media
+    terminal
+
+setchanneltype      (Set channel a given type)
+
+setchannelflag  (Set channel flags to allow commands associated with the given flag)
+    FLAGS:
+    admin
+    mod
+    poll
+    wiki
+    tag
+    info
+    utility
+
+setroleflag     (Set flag to given role)
+    FLAGS:
+    admin
+    mod
+    member
+    vip
+    media
+
+giverole    (Give the given user the given role)
+takerole    (Take the given role from the specified user)
+
+role, r         (Role menu command for members)
+remrole, rer    (Remove role, for users)
+
+verify  (verify member)
+mute    (mute member)
+banish  (Banish member to dungeon)
+report  (Report a member or message to admins and mods)
+warn    (Warn a user in case of rule break)
+lock    (Lock channel or server)
+
+notify  (post a message in notifications)
+dm      (DM a user)
+
+
+gentoken, gt    (Generate token for suggestion and feedback)
+
