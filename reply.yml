@@ -2,6 +2,10 @@ syntax_error:
   color: 0xff0000
   timeout: 15
 
+tag_error:
+  color: 0xff0000
+  timeout: 5
+
 poll:
   color: 0x00ff00
   timeout: 0

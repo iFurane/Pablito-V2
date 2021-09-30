@@ -1,0 +1,51 @@
+member_roles:
+  - gaming
+  - music
+  - cc
+
+owner:
+  id: 865126647170727946
+  name: The Crown
+  count: 1
+
+full_time_mod:
+  id: 865466600370733076
+  name: The Bishops
+  count: 0
+
+part_time_mod:
+  id: 865466651508342805
+  name: The Knights
+  count: 0
+
+member:
+  id: 865126810228752414
+  name: The Commons
+  count: 0
+
+vip_member:
+  id: 865126901281980446
+  name: The Lords
+  count: 0
+
+gaming:
+ id: 871435617215610910
+ name: Gamers License
+ count: 0
+
+music:
+  id: 871436296416034876
+  name: Music License
+  count: 0
+
+server_terminal:
+  id: 880652413256728617
+  name: Server Terminal Access Card
+  count: 0
+  timeout: 300
+
+suggestion_token:
+  id: 880649264362049607
+  name: Suggestion Token
+  count: 0
+  timeout: 0

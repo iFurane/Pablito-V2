@@ -11,6 +11,9 @@ poll, p         (Poll, question in "", options in '', no expiration if timeout 0
 pablitohelp     (Tell the user to check pablito-docs)
 credits         (Show credits)
 calculate, clc  (Calculate a given expression)
+
+
+
 memberinfo, mi  (Info of given member)
 serverinfo, si  (Server's info) ~
 channelinfo, ci (Channel info)  ~
@@ -58,7 +61,7 @@ giverole    (Give the given user the given role)
 takerole    (Take the given role from the specified user)
 
 role, r         (Role menu command for members)
-remrole, rer    (Remove role, for users)
+remrole, remr    (Remove role, for users)
 
 verify  (verify member)
 mute    (mute member)

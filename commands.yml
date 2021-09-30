@@ -1,3 +1,38 @@
 setstatus:
-  syntax: -setstatus <type:game,listen,watch,stream> <stream url if stream> <status text>
-  min_syntax: -ss <type:game,listen,watch,stream> <stream url if stream> <status text>
+  syntax: "-setstatus <type:game,listen,watch,stream> <stream url if stream> <status text>"
+  min_syntax: "-ss <type:game,listen,watch,stream> <stream url if stream> <status text>"
+
+# Info commands
+botinfo:
+  syntax: "-botinfo"
+  min_syntax: "-bi"
+
+serverinfo:
+  syntax: "-serverinfo"
+  min_syntax: "-si"
+
+# Tag Commands
+tagcreate:
+  syntax: "-tagcreate <'tag name in single quotes'> <tag content> <category>"
+  min_syntax: "-tc <'tag name in single quotes'> <tag content> <category>"
+
+tagrecall:
+  syntax: "-tag <tag name>"
+  min_syntax: "-t <tag name>"
+
+tagdelete:
+  syntax: "-tagdelete <tag name>"
+  min_synatx: "-td <tag name>"
+
+taginfo:
+  syntax: "-taginfo <tag name>"
+  min_syntax: "-ti <tag name>"
+
+tagedit:
+  syntax: "-tagedit <tag name> <new content>"
+  min_syntax: "-te <tag name> <new content>"
+
+taglist:
+  syntax: "-taglist <category>"
+  min_syntax: "-tl <category>"
+
