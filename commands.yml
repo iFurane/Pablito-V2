@@ -1,38 +1,126 @@
+# Commands and their properties
+# type: the type of command
+# syntax: the correct syntax for the command
+# min_syntax: syntax for mini command if applicable
+# cooldown: after how much time the command will be available again (doesn't apply to admins and mods)
+# flags: compatible flags (command can only be used in a channel which has one or more common flags with it)
+# roles: the roles which can access this command
+
+# Bot presence commands
 setstatus:
-  syntax: "-setstatus <type:game,listen,watch,stream> <stream url if stream> <status text>"
-  min_syntax: "-ss <type:game,listen,watch,stream> <stream url if stream> <status text>"
+  type: bot
+  syntax: "-setstatus <type:game listen watch stream> <stream url if stream> <status text>"
+  min_syntax:  "-ss <type:game listen watch stream> <stream url if stream> <status text>"
+  roles:
+    - owner
+    - admin
+
+# Member management commands
+mute:
+  syntax: "-mute <user ids or mentions> <'reason in quotes'>"
+  min_syntax: ""
+  roles:
+    - owner
+    - admin
+    - senior_mod
+
+kick:
+  syntax: "-kick <user ids or mentions> <reason>"
+  min_syntax: ""
+  roles:
+    - owner
+    - admin
+    - senior_mod
+
+ban:
+  syntax: "-ban <user id or mention> <reason>"
+  min_syntax: ""
+  roles:
+    - owner
+    - admin
+    - senior_mod
+
+warn:
+  syntax: "-warn <user id or mention> <reason>"
+  min_syntax: ""
+  roles:
+    - owner
+    - admin
+    - senior_mod
+    - junior_mod
+
+banish:
+  syntax: "-banish <user ids or mentions>"
+  min_syntax: ""
+  roles:
+    - owner
+    - admin
+    - senior_mod
 
 # Info commands
 botinfo:
+  type: info
   syntax: "-botinfo"
   min_syntax: "-bi"
+  cooldown: 0
+  roles:
+    - everyone
 
 serverinfo:
+  type: info
   syntax: "-serverinfo"
   min_syntax: "-si"
+  roles:
+    - everyone
+
+memberinfo:
+  type: info
+  syntax: "-memberinfo <user id or mention>"
+  min_syntax: "-mi <user id or mention>"
+  cooldown: 0
+  roles:
+    - everyone
+
+roleinfo:
+  type: info
+  syntax: "-roleinfo <role name or id>"
+  min_syntax: "-ri <role name or id>"
+  roles:
+    - everyone
 
 # Tag Commands
 tagcreate:
+  type: tag
   syntax: "-tagcreate <'tag name in single quotes'> <tag content> <category>"
   min_syntax: "-tc <'tag name in single quotes'> <tag content> <category>"
+  cooldown: 10
 
 tagrecall:
+  type: tag
   syntax: "-tag <tag name>"
   min_syntax: "-t <tag name>"
+  cooldown: 5
 
 tagdelete:
+  type: tag
   syntax: "-tagdelete <tag name>"
-  min_synatx: "-td <tag name>"
+  min_syntax: "-td <tag name>"
+  cooldown: 5
 
 taginfo:
+  type: tag
   syntax: "-taginfo <tag name>"
   min_syntax: "-ti <tag name>"
+  cooldown: 0
 
 tagedit:
+  type: tag
   syntax: "-tagedit <tag name> <new content>"
   min_syntax: "-te <tag name> <new content>"
+  cooldown: 10
 
 taglist:
+  type: tag
   syntax: "-taglist <category>"
   min_syntax: "-tl <category>"
-
+  cooldown: 10

@@ -57,18 +57,18 @@ setroleflag     (Set flag to given role)
     vip
     media
 
-giverole    (Give the given user the given role)
-takerole    (Take the given role from the specified user)
+giverole, gr    (Give the given user the given role)
+takerole, tr    (Take the given role from the specified user)
 
 role, r         (Role menu command for members)
 remrole, remr    (Remove role, for users)
 
 verify  (verify member)
-mute    (mute member)
-kick    (Kick a member)
+mute    (mute member)   ~
+kick    (Kick a member) ~
 banish  (Banish member to dungeon)
 report  (Report a member or message to admins and mods)
-warn    (Warn a user in case of rule break)
+warn    (Warn a user in case of rule break) ~
 lock    (Lock channel or server)
 
 notify  (post a message in notifications)
@@ -77,3 +77,5 @@ dm      (DM a user)
 
 gentoken, gt    (Generate token for suggestion and feedback)
 
+Youtube:
+ytsearch    (Search for videos on yt)

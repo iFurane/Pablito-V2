@@ -8,12 +8,12 @@ owner:
   name: The Crown
   count: 1
 
-full_time_mod:
+senior_mod:
   id: 865466600370733076
   name: The Bishops
   count: 0
 
-part_time_mod:
+junior_mod:
   id: 865466651508342805
   name: The Knights
   count: 0

@@ -30,6 +30,7 @@ bot = commands.Bot(command_prefix='-', intents=intents)
 @bot.event
 async def on_connect():
     print(f'{datetime.datetime.utcnow()}: {bot.user.name} has connected.')
+    update()
 
 
 # Event: bot ready
@@ -37,7 +38,6 @@ async def on_connect():
 async def on_ready():
     global boot_time
     boot_time = datetime.datetime.utcnow()  # UTC time when bot connected
-    update()    # Update all containers
     print(f'{boot_time}: {bot.user.name} is ready.')    # Verify connection
     await log(text=f'{bot.user.name} is ready')
 
@@ -46,6 +46,7 @@ async def on_ready():
 @bot.event
 async def on_member_join(member):
     # ask user to verify via captcha in DM
+    await log(text=f'{member}:{member.id} has joined the server. Bot verification pending')
     channel = bot.get_channel((channel_data['WELCOME']['ID']))
     embed = discord.Embed(title=f'Welcome to iServer, {member}',
                           description=f'{member.mention}, check message in your DM for verification process\n'
@@ -61,27 +62,30 @@ async def on_member_join(member):
 # Give 3 tries within 120 seconds
 # if answer matches then give all initial roles ( Verified, member, tag recall)
 # if all tries fail then leave for manual verification
+# async def verify_user(member):
 
 
 # Event: member leaves
 @bot.event
-async def on_member_leave(member):
+async def on_member_remove(member):
+    await log(text=f'{member}:{member.id} has left the server')
     channel = bot.get_channel(channel_data['GOODBYE']['ID'])
     embed = discord.Embed(title=f'{member} has left the iServer',
                           description=f'We have {channel.guild.member_count} members now',
                           color=0x000000    # black,change later
                           )
     embed.set_thumbnail(url=member.avatar_url)
-    embed.set_footer(text=f'{datetime.datetime.utcnow()}')
+    embed.set_footer(text=f'{datetime.datetime.utcnow()}',icon_url=member.avatar_url)
     await channel.send(embed=embed)
 
 
 # Role management commands:
+# These commands can only be used in role menu channel
 # Role, r: give role to the author
 @bot.command(name='role')
 async def r_role(ctx, *args):
     if ctx.channel.id != channel_data['ROLEMENU']['ID']:
-        await react_neg(ctx)
+        await react_prohib(ctx)
         await ctx.reply(f'This command can only be used in <#{channel_data["ROLEMENU"]["ID"]}>', delete_after=5)
         return
     query = ' '.join(args).lower()
@@ -125,6 +129,7 @@ async def rem_role(ctx, *args):
 # if type = stream, then args[0]: url of stream and args[1:]: status text
 @bot.command(name='setstatus')
 async def set_status(ctx, status_type='', *args):
+    await react_loading(ctx)
     status = ' '.join(args)
     if status_type == 'watching':
         await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=status))
@@ -135,9 +140,12 @@ async def set_status(ctx, status_type='', *args):
     elif status_type == 'streaming':
         await bot.change_presence(activity=discord.Streaming(name=' '.join(args[1:]), url=args[0]))
     else:
+        await unreact_loading(ctx)
+        await react_neg(ctx)
         embed = syntax_error_embed(ctx, 'setstatus')
         await ctx.reply(embed=embed, delete_after=reply_data['syntax_error']['timeout'])
         return
+    await unreact_loading(ctx)
     await ctx.message.add_reaction('✅')
     await log(f'Bot status changed')
 
@@ -153,7 +161,7 @@ async def bot_info(ctx, *args):
                           description=f'Bot name: {bot.user.name}\n'
                                       f'Uptime: {uptime}\n',
                           color=colors_data['DEFAULT'])
-    embed.set_footer(text=f'{issue_time} UTC')
+    embed.set_footer(text=f'{ctx.author} at {datetime.datetime.utcnow()} UTC',icon_url=ctx.author.avatar_url)
     await ctx.reply(embed=embed)
 
 
@@ -170,7 +178,7 @@ async def server_info(ctx, *args):
                           color=colors_data['DEFAULT']
                           )
     embed.set_thumbnail(url=ctx.guild.icon_url)
-    embed.set_footer(text=f'{ctx.author} at {datetime.datetime.utcnow()} UTC')
+    embed.set_footer(text=f'{ctx.author} at {datetime.datetime.utcnow()} UTC', icon_url=ctx.author.avatar_url)
     await ctx.reply(embed=embed)
 
 
@@ -185,9 +193,7 @@ async def emoji_info(ctx, name):
 # -roleinfo: Gives information about the given role
 
 # @bot.command(name='roleinfo')
-# -memberinfo: Gives information about the given user, or of the author if not specified
-# id
-# mention
+# -memberinfo: Gives information about the given user, or of the author if no id or mention is given
 @bot.command(name='memberinfo')
 async def member_info(ctx, *args):
     await react_loading(ctx)
@@ -224,7 +230,33 @@ async def member_info(ctx, *args):
                                       f'\n*Status: {status}*\n',
                           color=member.color)
     embed.set_thumbnail(url=member.avatar_url)
-    embed.set_footer(text=f'{ctx.author} at {datetime.datetime.utcnow()} UTC')
+    embed.set_footer(text=f'{ctx.author} at {datetime.datetime.utcnow()} UTC', icon_url=ctx.author.avatar_url)
+    await unreact_loading(ctx)
+    await ctx.reply(embed=embed)
+
+
+@bot.command(name='profilepic')
+async def profile_pic(ctx, *args):
+    await react_loading(ctx)
+    member = ''
+    if len(args) == 0:  # Nothing given: give author's info
+        member = ctx.author
+    elif args[0].isdigit():
+        member = ctx.guild.get_member(int(args[0]))
+    elif args[0].startswith('<@!') and args[0].endswith('>'):
+        member = ctx.guild.get_member(int(args[0][3:-1]))
+    else:
+        await unreact_loading(ctx)
+        await ctx.reply('User not found')
+        return
+    if member is None:
+        await unreact_loading(ctx)
+        await ctx.reply('User either does not exist or is not a member of this server')
+        return
+    embed = discord.Embed(title=f'{member}\'s profile pic',
+                          color=colors_data['DEFAULT'])
+    embed.set_image(url=member.avatar_url)
+    embed.set_footer(text=f'{ctx.author} at {datetime.datetime.utcnow()} UTC', icon_url=ctx.author.avatar_url)
     await unreact_loading(ctx)
     await ctx.reply(embed=embed)
 
@@ -234,8 +266,17 @@ async def pablito_help(ctx):
     embed = discord.Embed(title=f'Pablito help',
                           description=f'Check {bot.get_channel(channel_data["DOCS"]["ID"]).mention} for help',
                           color=colors_data['DEFAULT'])
-    embed.set_footer(text=f'{ctx.author} at {datetime.datetime.utcnow()} UTC')
+    embed.set_footer(text=f'{ctx.author} at {datetime.datetime.utcnow()} UTC', icon_url=ctx.author.avatar_url)
     await ctx.reply(embed=embed,delete_after=15)
+
+
+# -say: reply with the given string
+@bot.command(name='say')
+async def say(ctx, message):
+    if ctx != '':
+        await ctx.reply(f'{message}')
+    else:
+        return
 
 
 # Create an embed for syntax errors
@@ -247,7 +288,7 @@ def syntax_error_embed(ctx, command):
                                     f'`{commands_data[command]["min_syntax"]}`',
                         color=reply_data['syntax_error']['color']
                         )
-    embed.set_footer(text=f'{ctx.author} at {datetime.datetime.utcnow()} UTC')
+    embed.set_footer(text=f'{ctx.author} at {datetime.datetime.utcnow()} UTC', icon_url=ctx.author.avatar_url)
     return embed
 
 

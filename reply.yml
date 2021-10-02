@@ -1,6 +1,6 @@
 syntax_error:
   color: 0xff0000
-  timeout: 15
+  timeout: 10
 
 tag_error:
   color: 0xff0000
