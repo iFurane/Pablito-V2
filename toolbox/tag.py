@@ -10,12 +10,12 @@ import os
 
 # Check for correspoding tag file
 def recall_tag(tag_name):
-    if not os.path.exists(f'../tags/{tag_name}.yml'):   # Check if file doesn't exist
+    if not os.path.exists(f'../data/tags/{tag_name}.yml'):   # Check if file doesn't exist
         return 1 #  File doesn't exist
 
     tmp = {}    # Holder
     try:
-        with open(f'../tags/{tag_name}.yml','r') as f:
+        with open(f'../data/tags/{tag_name}.yml', 'r') as f:
             tmp = yaml.safe_load(f)
     except:
         return 2    # Other error
@@ -29,11 +29,11 @@ def recall_tag(tag_name):
 # Channel: channel in which tag is made
 # Date: date and time at tag's creation in UTC
 def tag_create(name, content, category, author, channel, date):
-    if os.path.exists(f'../tags/{name}.yml'):
+    if os.path.exists(f'../data/tags/{name}.yml'):
         return 1    # File (tag) exists
     tag_dt = {'content':f'{content}', 'category':f'{category}', 'author':f'{author}', 'channel':f'{channel}','date created':f'{date}'}
     try:
-        with open(f'../tags/{name}.yml','x') as f:
+        with open(f'../data/tags/{name}.yml', 'x') as f:
             yaml.safe_dump(tag_dt, f)
     except:
         return 2    # File error
@@ -42,10 +42,10 @@ def tag_create(name, content, category, author, channel, date):
 
 # tag_name: name of the tag being deleted
 def tag_delete(tag_name):
-    if not os.path.exists(f'../tags/{tag_name}.yml'):
+    if not os.path.exists(f'../data/tags/{tag_name}.yml'):
         return 1    # Tag not found
     try:
-        os.remove(f'../tags/{tag_name}.yml')
+        os.remove(f'../data/tags/{tag_name}.yml')
     except:
         return 2    # File error
     return 0    # Tag deleted successfully
@@ -53,11 +53,11 @@ def tag_delete(tag_name):
 
 # Returns true if edited successfully, false if tag not found
 def edit_tag(name, new_content, m_date):
-    if not os.path.exists(f'../tags/{tag_name}.yml'):
+    if not os.path.exists(f'../data/tags/{tag_name}.yml'):
         return 1    # Tag not found
     store = {}
     try:
-        with open(f'../tags/{name}.yml','w') as f:  # Open in overwrite mode
+        with open(f'../data/tags/{name}.yml', 'w') as f:  # Open in overwrite mode
             store = yaml.safe_load(f)
     except:
         return 2    # File error
@@ -71,10 +71,10 @@ def edit_tag(name, new_content, m_date):
 
 # Dump all tags into a list
 def list_all_tags():
-    list = os.listdir(path='../tags/')
+    list = os.listdir(path='../data/tags/')
     tmp = {}
     for i in list:
-        with open(f'../tags/{i}','r') as f:
+        with open(f'../data/tags/{i}', 'r') as f:
             tmp.append(yaml.safe_load(f))
     return tmp
 

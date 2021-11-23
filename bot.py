@@ -1,13 +1,16 @@
+import asyncio
 import discord
 from discord.ext import commands
 import datetime
 import yaml
 import os
+import random
+import hashlib
 import shlex
 import toolbox
 
 # Load tokens
-with open(file='tokens.yml', mode='r') as f:
+with open(file='data/tokens.yml', mode='r') as f:
     tokens = yaml.safe_load(f)
 
 # Global variables and containers
@@ -17,13 +20,14 @@ colors_data = {}    # Container for color data
 channel_data = {}   # Container for Channel data
 reply_data = {}       # Container for reply formats
 roles_data = {}       # Container for roles data
+guild_data = {}
 emojis_data = {}      # Container for emoji data
 boot_time = 0       # UTC time at bot's connection
 
-# Give all permissions to bot
-intents = discord.Intents.all()
+
 # Prefix is -
-bot = commands.Bot(command_prefix='-', intents=intents)
+# All permissions granted to the bot
+bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 
 
 # Event: bot connected
@@ -38,22 +42,38 @@ async def on_connect():
 async def on_ready():
     global boot_time
     boot_time = datetime.datetime.utcnow()  # UTC time when bot connected
-    print(f'{boot_time}: {bot.user.name} is ready.')    # Verify connection
-    await log(text=f'{bot.user.name} is ready')
+    await log(text=f'{bot.user.name} is ready', event_type='Bot Connect')   # Bot connect event logged
 
 
 # Event: user joins
 @bot.event
 async def on_member_join(member):
     # ask user to verify via captcha in DM
-    await log(text=f'{member}:{member.id} has joined the server. Bot verification pending')
+    await log(text=f'{member}:{member.id} has joined the server.', event_type='User Join')
     channel = bot.get_channel((channel_data['WELCOME']['ID']))
     embed = discord.Embed(title=f'Welcome to iServer, {member}',
                           description=f'{member.mention}, check message in your DM for verification process\n'
                                       f'We have {channel.guild.member_count} members now',
-                          color=colors_data['DEFAULT'])
+                          color=colors_data['POSITIVE'])
     embed.set_thumbnail(url=member.avatar_url)
     embed.set_footer(text=f'{datetime.datetime.utcnow()}')
+    await channel.send(embed=embed)
+    dm_channel = await member.create_dm()
+    await dm_channel.send('Welcome to iServer!\n'
+                          'To verify as a member, type `-verify` and follow the instructions.')
+
+
+# Event: member leaves
+@bot.event
+async def on_member_remove(member):
+    await log(text=f'{member}:{member.id} has left the server.',event_type='User Leave')
+    channel = bot.get_channel(channel_data['GOODBYE']['ID'])
+    embed = discord.Embed(title=f'{member} has left the iServer',
+                          description=f'We have {channel.guild.member_count} members now',
+                          color=colors_data['NEGATIVE']
+                          )
+    embed.set_thumbnail(url=member.avatar_url)
+    embed.set_footer(text=f'{datetime.datetime.utcnow()}',icon_url=member.avatar_url)
     await channel.send(embed=embed)
 
 
@@ -62,92 +82,52 @@ async def on_member_join(member):
 # Give 3 tries within 120 seconds
 # if answer matches then give all initial roles ( Verified, member, tag recall)
 # if all tries fail then leave for manual verification
-# async def verify_user(member):
-
-
-# Event: member leaves
-@bot.event
-async def on_member_remove(member):
-    await log(text=f'{member}:{member.id} has left the server')
-    channel = bot.get_channel(channel_data['GOODBYE']['ID'])
-    embed = discord.Embed(title=f'{member} has left the iServer',
-                          description=f'We have {channel.guild.member_count} members now',
-                          color=0x000000    # black,change later
-                          )
-    embed.set_thumbnail(url=member.avatar_url)
-    embed.set_footer(text=f'{datetime.datetime.utcnow()}',icon_url=member.avatar_url)
-    await channel.send(embed=embed)
-
-
-# Role management commands:
-# These commands can only be used in role menu channel
-# Role, r: give role to the author
-@bot.command(name='role')
-async def r_role(ctx, *args):
-    if ctx.channel.id != channel_data['ROLEMENU']['ID']:
-        await react_prohib(ctx)
-        await ctx.reply(f'This command can only be used in <#{channel_data["ROLEMENU"]["ID"]}>', delete_after=5)
+# async def verify(ctx, **kwargs):
+@bot.command(name='verify')
+@commands.dm_only()
+async def verify(ctx, **kwargs):
+    verifee = ctx.message.author
+    guild = bot.get_guild(guild_data['ID'])
+    member = guild.get_member(verifee.id)
+    common_role = guild.get_role(roles_data['member']['id'])
+    await log(text=f'{member}:{member.id} initiated verification.', event_type='Verification')
+    if common_role in member.roles:
+        await ctx.send('You\'re already verified!')
+        await log(f'{member}:{member.id} is already verified.', event_type='Verification')
         return
-    query = ' '.join(args).lower()
-    role = None
-    for i in roles_data['member_roles']:
-        if query == i:
-            role = ctx.guild.get_role(int(roles_data[i]['id']))
-            break
-    if role is None:
-        await react_neg(ctx)
+    passcode = hashlib.sha256((str(random.getrandbits(4096))+str(random.getrandbits(4096))).encode()).hexdigest()[0:state_data['verify_code_strength']]
+    interaction = await ctx.send(f'Your verification code is: `{passcode}`\n'
+                                  f'Message this code within 2 minutes to get verified.')
+    def check(m):
+        return isinstance(m.channel,discord.DMChannel)
+    try:
+        answer = await bot.wait_for('message',check=check, timeout=90)
+    except asyncio.TimeoutError:
+        await ctx.send('Timeout! Type `-verify` again to verify')
+        await log(f'{member}:{member.id} failed code verification due to timeout', event_type='Verification')
         return
-    await ctx.author.add_roles(role)
-    await react_pos(ctx)
-    return
-
-
-# -removerole, -remr: Removes a member role
-# Can only be used in rolemenu channel
-@bot.command(name='removerole')
-async def rem_role(ctx, *args):
-    if ctx.channel.id != channel_data['ROLEMENU']['ID']:
-        await react_neg(ctx)
-        await ctx.reply(f'This command can only be used in <#{channel_data["ROLEMENU"]["ID"]}>', delete_after=5)
-        return
-    query = ' '.join(args).lower()
-    role = None
-    for i in roles_data['member_roles']:
-        if query == i:
-            role = ctx.guild.get_role(int(roles_data[i]['id']))
-            break
-    if role is None:
-        await react_neg(ctx)
-        return
-    await ctx.author.remove_roles(role)
-    await react_pos(ctx)
-    return
-
-
-# -setstatus: Set the bot's status
-# args[0]: status type (playing, listening, watching , streaming)
-# if type = stream, then args[0]: url of stream and args[1:]: status text
-@bot.command(name='setstatus')
-async def set_status(ctx, status_type='', *args):
-    await react_loading(ctx)
-    status = ' '.join(args)
-    if status_type == 'watching':
-        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=status))
-    elif status_type == 'listening':
-        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=status))
-    elif status_type == 'playing':
-        await bot.change_presence(activity=discord.Game(status))
-    elif status_type == 'streaming':
-        await bot.change_presence(activity=discord.Streaming(name=' '.join(args[1:]), url=args[0]))
+    # Check if code is correct
+    if answer.content == passcode:
+        final = await ctx.send(f"Code matched! Now click ✅ to complete verification.")
     else:
-        await unreact_loading(ctx)
-        await react_neg(ctx)
-        embed = syntax_error_embed(ctx, 'setstatus')
-        await ctx.reply(embed=embed, delete_after=reply_data['syntax_error']['timeout'])
+        await ctx.send('Code mismatch! Type `-verify` again to restart verification.')
+        await log(f'{member}:{member.id} failed verification due to code mismatch.', event_type='Verification')
         return
-    await unreact_loading(ctx)
-    await ctx.message.add_reaction('✅')
-    await log(f'Bot status changed')
+    await final.add_reaction('✅')
+    try:
+        def check_2(reaction, user):
+            return reaction.emoji == '✅' and user == ctx.author
+        await bot.wait_for('reaction_add', check=check_2, timeout=90)
+    except asyncio.TimeoutError:
+        await ctx.send('Timeout! Type `-verify` again to verify')
+        await log(f'{member}:{member.id} failed reaction verification due to timeout.', event_type='Verification')
+        return
+    try:
+        await member.add_roles(common_role)
+    except e:
+        await ctx.send('An unknown error occured. Try `-verify` again. If the problem persists, contact the admin iFurane#3113.')
+        return
+    await log(f'{member}:{member.id} has been verified successfully!')
 
 
 # -botinfo: Show information about the bot
@@ -162,6 +142,7 @@ async def bot_info(ctx, *args):
                                       f'Uptime: {uptime}\n',
                           color=colors_data['DEFAULT'])
     embed.set_footer(text=f'{ctx.author} at {datetime.datetime.utcnow()} UTC',icon_url=ctx.author.avatar_url)
+    embed.set_thumbnail(url=bot.user.avatar_url)
     await ctx.reply(embed=embed)
 
 
@@ -172,7 +153,6 @@ async def server_info(ctx, *args):
                           description=f'Server name: {ctx.guild.name}\n'
                                       f'Created at: {ctx.guild.created_at}\n'
                                       f'Owner: {ctx.guild.owner}\n'
-                                      f'Region: {ctx.guild.region}\n'
                                       f'Total Members: {ctx.guild.member_count}\n'
                                       f'Boost level: {ctx.guild.premium_tier}',
                           color=colors_data['DEFAULT']
@@ -182,23 +162,10 @@ async def server_info(ctx, *args):
     await ctx.reply(embed=embed)
 
 
-@bot.command(name='emojiinfo')
-async def emoji_info(ctx, name):
-    emojis = ctx.guild.emojis
-    await ctx.reply(f'{emojis}')
-
-
-# -channelinfo: Gives information about the given channel, or the current channel if not specified
-# @bot.command(name='channelinfo')
-# -roleinfo: Gives information about the given role
-
-# @bot.command(name='roleinfo')
-# -memberinfo: Gives information about the given user, or of the author if no id or mention is given
 @bot.command(name='memberinfo')
-async def member_info(ctx, *args):
+async def member_info(ctx, query=''):
     await react_loading(ctx)
-    query = ' '.join(args)
-    if len(args) == 0:  # Nothing given: give author's info
+    if query == '':  # Nothing given: give author's info
         member = ctx.author
     elif query.isdigit():
         member = ctx.guild.get_member(int(query))
@@ -235,31 +202,18 @@ async def member_info(ctx, *args):
     await ctx.reply(embed=embed)
 
 
-@bot.command(name='profilepic')
-async def profile_pic(ctx, *args):
-    await react_loading(ctx)
-    member = ''
-    if len(args) == 0:  # Nothing given: give author's info
-        member = ctx.author
-    elif args[0].isdigit():
-        member = ctx.guild.get_member(int(args[0]))
-    elif args[0].startswith('<@!') and args[0].endswith('>'):
-        member = ctx.guild.get_member(int(args[0][3:-1]))
-    else:
-        await unreact_loading(ctx)
-        await ctx.reply('User not found')
-        return
-    if member is None:
-        await unreact_loading(ctx)
-        await ctx.reply('User either does not exist or is not a member of this server')
-        return
-    embed = discord.Embed(title=f'{member}\'s profile pic',
-                          color=colors_data['DEFAULT'])
-    embed.set_image(url=member.avatar_url)
-    embed.set_footer(text=f'{ctx.author} at {datetime.datetime.utcnow()} UTC', icon_url=ctx.author.avatar_url)
-    await unreact_loading(ctx)
-    await ctx.reply(embed=embed)
+@bot.command(name='emojiinfo')
+async def emoji_info(ctx, **kwargs):
+    emojis = ctx.guild.emojis
+    await ctx.reply(f'{emojis}')
 
+
+# -channelinfo: Gives information about the given channel, or the current channel if not specified
+# @bot.command(name='channelinfo')
+# -roleinfo: Gives information about the given role
+
+# @bot.command(name='roleinfo')
+# -memberinfo: Gives information about the given user, or of the author if no id or mention is given
 
 @bot.command(name='pablitohelp')
 async def pablito_help(ctx):
@@ -273,10 +227,17 @@ async def pablito_help(ctx):
 # -say: reply with the given string
 @bot.command(name='say')
 async def say(ctx, message):
-    if ctx != '':
+    if message != '':
         await ctx.reply(f'{message}')
     else:
         return
+
+
+@bot.command(name='user')
+async def user(ctx, member :discord.Member):
+    if member is not None:
+        await ctx.reply(str(member))
+
 
 
 # Create an embed for syntax errors
@@ -295,28 +256,32 @@ def syntax_error_embed(ctx, command):
 # Update all the value containers
 def update():
     global commands_data
-    with open('commands.yml', 'r') as fh:
+    with open('data/commands.yml', 'r') as fh:
         commands_data = yaml.safe_load(fh)
 
     global state_data
-    with open('state.yml', 'r') as fs:
+    with open('data/state.yml', 'r') as fs:
         state_data = yaml.safe_load(fs)
 
     global channel_data
-    with open('channels.yml', 'r') as fc:
+    with open('data/channels.yml', 'r') as fc:
         channel_data = yaml.safe_load(fc)
 
     global colors_data
-    with open('colors.yml', 'r') as fcl:
+    with open('data/colors.yml', 'r') as fcl:
         colors_data = yaml.safe_load(fcl)
 
     global reply_data
-    with open('reply.yml','r') as fr:
+    with open('data/reply.yml', 'r') as fr:
         reply_data = yaml.safe_load(fr)
 
     global roles_data
-    with open('roles.yml','r') as fro:
+    with open('data/roles.yml', 'r') as fro:
         roles_data = yaml.safe_load(fro)
+
+    global guild_data
+    with open('data/guild.yml', 'r') as fg:
+        guild_data = yaml.safe_load(fg)
 
     #global emojis_data
     #with open('emojis.yml','r') as fe:
@@ -346,8 +311,9 @@ async def react_loading(ctx):
 async def unreact_loading(ctx):
     await ctx.message.clear_reaction(f'<a:loading:892783955386970182>')
 
-async def log(text):
+async def log(text, event_type='Other'):
     channel = bot.get_channel(channel_data['BOT_LOG']['ID'])
-    await channel.send(f'{datetime.datetime.utcnow()} UTC: {text}')
+    print(f'{datetime.datetime.utcnow()} UTC ({event_type}): {text}')
+    await channel.send(f'*{datetime.datetime.utcnow()} UTC* **({event_type})**: {text}')
 
 bot.run(tokens['discord_token'])    # Run the bot
